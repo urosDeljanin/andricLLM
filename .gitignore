@@ -1,0 +1,8 @@
+*.xml
+*.gz
+*.xz
+*.txt
+*.pdf
+*.bin
+nlp
+__pycache__
