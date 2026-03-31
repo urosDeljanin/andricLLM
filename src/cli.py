@@ -29,8 +29,8 @@ def parse_args():
 	parser.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
 	parser.add_argument("--prompt", default="")
 	parser.add_argument("--max-new-tokens", type=int, default=1000)
-	parser.add_argument("--temperature", type=float, default=0.7)
-	parser.add_argument("--top-k", type=int, default=None)
+	parser.add_argument("--temperature", type=float, default=0.5)
+	parser.add_argument("--top-k", type=int, default=30)
 	return parser.parse_args()
 
 
@@ -59,7 +59,7 @@ def main():
 		train(cfg)
 	else:
 		generate_text(
-			model_path=args.save_path,
+			model_path=args.init_from,
 			prompt=args.prompt,
 			max_new_tokens=args.max_new_tokens,
 			temperature=args.temperature,

@@ -65,7 +65,7 @@ def train(cfg: TrainConfig):
 	for step in range(1, cfg.max_steps + 1):
 		xb, yb = get_batch(train_data, cfg.block_size, cfg.batch_size, cfg.device)
 		_, loss = model(xb, yb)
-		
+		train_loss = loss.item()
 		loss /= cfg.acc_steps
 		loss.backward()
 
@@ -74,7 +74,6 @@ def train(cfg: TrainConfig):
 			optimizer.zero_grad(set_to_none=True)
 
 		if step % cfg.eval_every == 0 or step == 1:
-			train_loss = estimate_loss(model, train_data, cfg)
 			val_loss = estimate_loss(model, val_data, cfg)
 			ppl = math.exp(val_loss)
 			log(f"step {step} | train {train_loss:.4f} | val {val_loss:.4f} | ppl {ppl:.2f}")

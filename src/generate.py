@@ -3,7 +3,6 @@ import torch
 
 from .config import TrainConfig
 from .model import TransformerLM
-from .tokenization import encode_with_inline_eos
 
 
 def _resolve_device(requested_device: str) -> str:
@@ -35,7 +34,7 @@ def generate_text(
 	model.eval()
 
 	if prompt:
-		prompt_ids = encode_with_inline_eos(prompt, sp)
+		prompt_ids = sp.encode(prompt, add_bos = True)
 	else:
 		prompt_ids = [sp.bos_id()] if sp.bos_id() != -1 else [0]
 	eos_id = sp.eos_id()
