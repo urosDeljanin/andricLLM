@@ -22,9 +22,11 @@ def parse_args():
 	parser.add_argument("--dropout", type=float, default=0.1)
 	parser.add_argument("--lr", type=float, default=3e-4)
 	parser.add_argument("--max-steps", type=int, default=3000)
+	parser.add_argument("--warmup-steps", type=int, default=300)
 	parser.add_argument("--eval-every", type=int, default=50)
 	parser.add_argument("--acc-steps", type=int, default=25)
 	parser.add_argument("--val-split", type=float, default=0.1)
+	parser.add_argument("--save-last-model", action="store_true")
 	parser.add_argument("--seed", type=int, default=42)
 	parser.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
 	parser.add_argument("--prompt", default="")
@@ -50,9 +52,11 @@ def main():
 			dropout=args.dropout,
 			lr=args.lr,
 			max_steps=args.max_steps,
+			warmup_steps=args.warmup_steps,
 			eval_every=args.eval_every,
 			acc_steps=args.acc_steps,
 			val_split=args.val_split,
+			save_last_model=args.save_last_model,
 			device=args.device,
 			seed=args.seed,
 		)

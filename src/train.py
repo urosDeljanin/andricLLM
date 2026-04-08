@@ -11,13 +11,14 @@ from torch import nn
 from .config import TrainConfig
 from .data import get_batch, load_train_val
 from .model import TransformerLM
+from .scheduler import create_cosine_with_warmup_scheduler
 
 
 @torch.no_grad()
 def estimate_loss(model: nn.Module, data: torch.Tensor, cfg: TrainConfig):
 	model.eval()
 	losses = []
-	for _ in range(10):
+	for _ in range(6):
 		xb, yb = get_batch(data, cfg.block_size, cfg.batch_size, cfg.device)
 		_, loss = model(xb, yb)
 		losses.append(loss.item())
@@ -58,6 +59,7 @@ def train(cfg: TrainConfig):
 		log(f"initialized model weights from {cfg.init_from}")
 	model.to(cfg.device)
 	optimizer = torch.optim.AdamW(model.parameters(), lr=cfg.lr)
+	scheduler = create_cosine_with_warmup_scheduler(optimizer, cfg.warmup_steps, int(cfg.max_steps/cfg.acc_steps))
 	optimizer.zero_grad(set_to_none=True)
 	best_val_loss = float("inf")
 	best_state = None
@@ -71,13 +73,15 @@ def train(cfg: TrainConfig):
 
 		if step % cfg.acc_steps == 0 or step == cfg.max_steps:
 			optimizer.step()
+			scheduler.step()
 			optimizer.zero_grad(set_to_none=True)
 
 		if step % cfg.eval_every == 0 or step == 1:
 			val_loss = estimate_loss(model, val_data, cfg)
 			ppl = math.exp(val_loss)
-			log(f"step {step} | train {train_loss:.4f} | val {val_loss:.4f} | ppl {ppl:.2f}")
-			if val_loss < best_val_loss:
+			current_lr = optimizer.param_groups[0]['lr']
+			log(f"step {step} | train {train_loss:.4f} | val {val_loss:.4f} | ppl {ppl:.2f} | lr {current_lr:.2e}")
+			if cfg.save_last_model or val_loss < best_val_loss:
 				best_val_loss = val_loss
 				best_state = {k: v.cpu() for k, v in model.state_dict().items()}
 

@@ -4,5 +4,7 @@
 *.txt
 *.pdf
 *.bin
+*.pt
+*.png
 nlp
 __pycache__

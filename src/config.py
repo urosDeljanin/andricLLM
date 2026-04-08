@@ -17,8 +17,10 @@ class TrainConfig:
 	dropout: float = 0.1
 	lr: float = 3e-4
 	max_steps: int = 3000
+	warmup_steps: int = 300
 	eval_every: int = 50
 	acc_steps: int = 25
 	val_split: float = 0.1
+	save_last_model: bool = False
 	device: str = "cuda" if torch.cuda.is_available() else "cpu"
 	seed: int = 42

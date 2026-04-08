@@ -45,6 +45,6 @@ def prepare_data(input_path, output_path):
     print(f"Output saved to {output_path}")
 
 if __name__ == '__main__':
-    input_file = os.path.join(os.path.dirname(__file__), 'srWaC', 'srWaC-cirilica.txt')
-    output_file = os.path.join(os.path.dirname(__file__), 'srWaC', 'srWaC-clean.txt')
+    input_file = os.path.join(os.path.dirname(__file__), 'cc-100', 'sr.txt')
+    output_file = os.path.join(os.path.dirname(__file__), 'cc-100', 'cc-100-clean.txt')
     prepare_data(input_file, output_file)
