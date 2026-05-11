@@ -55,8 +55,6 @@ def load_train_val(sp: spm.SentencePieceProcessor, cfg: TrainConfig):
 		raise SystemExit("--val-split must be between 0 and 1.")
 	total = len(train_ids)
 	cut = int(total * (1.0 - cfg.val_split))
-	if cut <= cfg.block_size + 1 or (total - cut) <= cfg.block_size + 1:
-		raise SystemExit("Not enough data for the requested validation split.")
 	val_ids = train_ids[cut:]
 	train_ids = train_ids[:cut]
 	return train_ids, val_ids
@@ -64,8 +62,6 @@ def load_train_val(sp: spm.SentencePieceProcessor, cfg: TrainConfig):
 
 def get_batch(data, block_size: int, batch_size: int, device: str):
 	max_start = len(data) - block_size - 1
-	if max_start < 0:
-		raise SystemExit("Dataset is too small for the configured block size.")
 	starts = torch.randint(0, max_start + 1, (batch_size,), dtype=torch.int64).numpy()
 	offsets = np.arange(block_size, dtype=np.int64)
 	x_np = data[starts[:, None] + offsets[None, :]]

@@ -7,10 +7,10 @@ import torch
 class TrainConfig:
 	model_path: str = "tokenizer/andric_sp.model"
 	input_path: str = "input/sveKnjige.txt"
-	save_path: str = "models/andric_transformer.pt"
+	save_path: str = "models/andric_model.pt"
 	init_from: str | None = None
-	block_size: int = 256
-	batch_size: int = 32
+	block_size: int = 512
+	batch_size: int = 20
 	embed_dim: int = 384
 	num_layers: int = 6
 	num_heads: int = 6
