@@ -1,10 +1,11 @@
 import argparse
+import os
 from pathlib import Path
 
 from datasets import load_dataset
 from huggingface_hub import login
 
-login(token="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")
+login(token=os.environ.get("HF_TOKEN"))
 
 def _compact_to_single_line(text: str) -> str:
     # Ensure every dataset entry is represented as exactly one output line.

@@ -126,11 +126,35 @@ The base Serbian model was trained on a large corpus of approximately **2.8 bill
 
 ![Serbian Model Training Loss](output/sr_training.png)
 
+#### Performance
+
+The Serbian base model reaches a perplexity of approximately **37**, which reflects solid general-language modeling quality on this corpus. Lower perplexity indicates better predictive fit.
+
 ### Andrić Model (`andric_model.pt`)
 This model was trained specifically on the collected and carefully cleaned literary works of Ivo Andrić. By learning from these texts, the model adapted to mimic Andrić's unique writing style, tone, and vocabulary.
 
 ![Andrić Model Training Loss](output/andric_training.png)
 
-## Contributing
+#### Performance
 
-Contributions are welcome! Please feel free to submit a pull request or open an issue if you have any suggestions or find any bugs.
+The Andrić model reaches a perplexity of approximately **39**. That keeps it close to the base model while preserving the stylistic focus learned from Andrić's texts.
+
+### Number of parameters
+
+The total number of trainable parameters for the `TransformerLM` model is determined by summing the parameters across its components (Embeddings, Transformer Layers, and Output Head).
+
+**Formula:**
+$$ P = (2 \times \text{vocab\_size} \times \text{embed\_dim}) + (\text{block\_size} \times \text{embed\_dim}) + \text{num\_layers} \times (12 \times \text{embed\_dim}^2 + 13 \times \text{embed\_dim}) + 2 \times \text{embed\_dim} $$
+
+Given the default configuration parameters:
+- `vocab_size`: 8000
+- `embed_dim`: 384
+- `block_size`: 512
+- `num_layers`: 6
+
+**Calculation Breakdown:**
+- **Embedding layers & Output Head:** $2 \times 8000 \times 384 + 512 \times 384 = 6,340,608$ parameters
+- **Transformer Layers (x6):** $6 \times (12 \times 384^2 + 13 \times 384) = 10,646,784$ parameters
+- **Final LayerNorm:** $2 \times 384 = 768$ parameters
+
+**Total:** ~17 million parameters (**16,988,160** to be exact).
