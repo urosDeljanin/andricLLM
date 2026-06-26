@@ -144,7 +144,8 @@ The Andrić model reaches a perplexity of approximately **39**. That keeps it cl
 The total number of trainable parameters for the `TransformerLM` model is determined by summing the parameters across its components (Embeddings, Transformer Layers, and Output Head).
 
 **Formula:**
-$ P = (2 \times \text{vocab\_size} \times \text{embed\_dim}) + (\text{block\_size} \times \text{embed\_dim}) + \text{num\_layers} \times (12 \times \text{embed\_dim}^2 + 13 \times \text{embed\_dim}) + 2 \times \text{embed\_dim} $
+
+$$P = (2 \times \text{vocab\\_size} \times \text{embed\\_dim}) + (\text{block\\_size} \times \text{embed\\_dim}) + \text{num\\_layers} \times (12 \times \text{embed\\_dim}^2 + 13 \times \text{embed\\_dim}) + 2 \times \text{embed\\_dim}$$
 
 Given the default configuration parameters:
 - `vocab_size`: 8000
