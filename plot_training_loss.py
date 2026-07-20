@@ -35,6 +35,24 @@ def parse_log(log_path: Path):
     return steps, train_losses, val_losses
 
 
+def sliding_window_average(values, window_size):
+    if window_size <= 1:
+        return list(values)
+
+    averaged = []
+    running_sum = 0.0
+
+    for index, value in enumerate(values):
+        running_sum += value
+        if index >= window_size:
+            running_sum -= values[index - window_size]
+
+        current_window = min(index + 1, window_size)
+        averaged.append(running_sum / current_window)
+
+    return averaged
+
+
 def collect_log_files(paths: Iterable[Path]):
     log_files = []
 
@@ -101,6 +119,12 @@ def build_parser():
         default=0,
         help="Preskoci prvih N koraka na grafiku.",
     )
+    parser.add_argument(
+        "--window-size",
+        type=int,
+        default=1,
+        help="Velicina sliding window-a za zagladjivanje loss krive (1 iskljucuje zagladjivanje).",
+    )
     return parser
 
 
@@ -126,9 +150,16 @@ def main():
         label_prefix = log_path.stem
         first_step = steps[0]
         adjusted_steps = [step_offset + (step - first_step) for step in steps]
+        train_to_plot = sliding_window_average(train_losses, args.window_size)
+        val_to_plot = sliding_window_average(val_losses, args.window_size)
 
-        plt.plot(adjusted_steps, train_losses, label=f"{label_prefix} train", linewidth=1.5)
-        plt.plot(adjusted_steps, val_losses, label=f"{label_prefix} val", linewidth=1.5, linestyle="--")
+        if args.window_size > 1:
+            plt.plot(adjusted_steps, train_losses, color="tab:blue", alpha=0.18, linewidth=1.0)
+            plt.plot(adjusted_steps, val_losses, color="tab:orange", alpha=0.18, linewidth=1.0, linestyle="--")
+
+        suffix = f" (window {args.window_size})" if args.window_size > 1 else ""
+        plt.plot(adjusted_steps, train_to_plot, label=f"{label_prefix} train{suffix}", linewidth=1.8)
+        plt.plot(adjusted_steps, val_to_plot, label=f"{label_prefix} val{suffix}", linewidth=1.8, linestyle="--")
         step_offset = adjusted_steps[-1] + 1
         plotted_any = True
 

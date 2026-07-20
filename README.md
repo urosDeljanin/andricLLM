@@ -66,27 +66,27 @@ To train the model, use the `train` mode. You can specify various parameters to 
 
 ```bash
 python andric.py --mode train \
-    --input-path input/sveKnjige.txt \
-    --save-path models/andric_transformer.pt \
-    --block-size 512 \
-    --batch-size 20 \
-    --embed-dim 384 \
-    --num-layers 6 \
-    --num-heads 6 \
+    --input-path input/datasetbpe.txt \
+    --save-path models/sr_model.pt \
+    --block-size 1024 \
+    --batch-size 16 \
+    --embed-dim 768 \
+    --num-layers 8 \
+    --num-heads 12 \
     --lr 3e-4 \
     --max-steps 3000
 ```
 
 **Key Training Arguments:**
 
--   `--input-path`: Path to the training text file (default: `input/sveKnjige.txt`).
--   `--save-path`: Path to save the trained model (default: `models/andric_model.pt`).
+-   `--input-path`: Path to the training text file (default: `input/datasetbpe.txt`).
+-   `--save-path`: Path to save the trained model (default: `models/sr_model.pt`).
 -   `--init-from`: Initialize training from a pre-trained model (default: `None`).
--   `--block-size`: Context size for the transformer (default: `512`).
--   `--batch-size`: Number of sequences per batch (default: `20`).
--   `--embed-dim`: Dimension of the token embeddings (default: `384`).
--   `--num-layers`: Number of transformer layers (default: `6`).
--   `--num-heads`: Number of attention heads (default: `6`).
+-   `--block-size`: Context size for the transformer (default: `1024`).
+-   `--batch-size`: Number of sequences per batch (default: `16`).
+-   `--embed-dim`: Dimension of the token embeddings (default: `768`).
+-   `--num-layers`: Number of transformer layers (default: `8`).
+-   `--num-heads`: Number of attention heads (default: `12`).
 -   `--lr`: Learning rate (default: `3e-4`).
 -   `--max-steps`: Total number of training steps (default: `3000`).
 
@@ -96,7 +96,7 @@ To generate text from a trained model, use the `generate` mode.
 
 ```bash
 python andric.py --mode generate \
-    --init-from models/andric_model.pt \
+    --init-from models/andric_model-epoch1.pt \
     --prompt "У кафани је седео" \
     --max-new-tokens 500 \
     --temperature 0.7 \
@@ -122,13 +122,13 @@ The model is designed to be trained on plain text files. The `input/` directory 
 ## Pre-trained Models and Training Details
 
 ### Serbian Base Model (`sr_model.pt`)
-The base Serbian model was trained on a large corpus of approximately **2.8 billion tokens** consisting of general Serbian language text collected from the internet (exclusively in Cyrillic). The training was conducted in multiple stages, incorporating hyperparameter tuning to optimize the model's performance over time.
+The base Serbian model was trained on a large corpus of approximately **1.8 billion tokens** consisting of general Serbian language text collected from the internet (exclusively in Cyrillic). The training was conducted in multiple stages, incorporating hyperparameter tuning to optimize the model's performance over time.
 
 ![Serbian Model Training Loss](output/sr_training.png)
 
 #### Performance
 
-The Serbian base model reaches a perplexity of approximately **37**, which reflects solid general-language modeling quality on this corpus. Lower perplexity indicates better predictive fit.
+The Serbian base model reaches a perplexity of approximately **43**, which reflects solid general-language modeling quality on this corpus. Lower perplexity indicates better predictive fit.
 
 ### Andrić Model (`andric_model.pt`)
 This model was trained specifically on the collected and carefully cleaned literary works of Ivo Andrić. By learning from these texts, the model adapted to mimic Andrić's unique writing style, tone, and vocabulary.
@@ -137,7 +137,9 @@ This model was trained specifically on the collected and carefully cleaned liter
 
 #### Performance
 
-The Andrić model reaches a perplexity of approximately **39**. That keeps it close to the base model while preserving the stylistic focus learned from Andrić's texts.
+After only one epoch (~250 steps), the fine-tuned model started to overfit. The goal is to add Ivo Andrić's literary style, so the model to be used is a fine-tuned model from a single epoch.
+
+The Andrić model reaches a perplexity of approximately **50**. That keeps it close to the base model while preserving the stylistic focus learned from Andrić's texts.
 
 ### Number of parameters
 
@@ -149,13 +151,13 @@ $$P = (2 \times \text{vocab\\_size} \times \text{embed\\_dim}) + (\text{block\\_
 
 Given the default configuration parameters:
 - `vocab_size`: 8000
-- `embed_dim`: 384
-- `block_size`: 512
-- `num_layers`: 6
+- `embed_dim`: 768
+- `block_size`: 1024
+- `num_layers`: 8
 
 **Calculation Breakdown:**
-- **Embedding layers & Output Head:** $2 \times 8000 \times 384 + 512 \times 384 = 6,340,608$ parameters
-- **Transformer Layers (x6):** $6 \times (12 \times 384^2 + 13 \times 384) = 10,646,784$ parameters
-- **Final LayerNorm:** $2 \times 384 = 768$ parameters
+- **Embedding layers & Output Head:** $2 \times 8000 \times 768 + 1024 \times 768 = 13,074,432$ parameters
+- **Transformer Layers (x8):** $8 \times (12 \times 768^2 + 13 \times 768) = 56,702,976$ parameters
+- **Final LayerNorm:** $2 \times 768 = 1536$ parameters
 
-**Total:** ~17 million parameters (**16,988,160** to be exact).
+**Total:** ~70 million parameters (**69,778,944** to be exact).

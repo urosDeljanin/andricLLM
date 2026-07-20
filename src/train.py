@@ -14,11 +14,33 @@ from .model import TransformerLM
 from .scheduler import create_cosine_with_warmup_scheduler
 
 
+def build_checkpoint_path(save_path: str, checkpoint_index: int, total_checkpoints: int) -> str:
+	if total_checkpoints <= 1:
+		return save_path
+	base_name, extension = os.path.splitext(save_path)
+	if base_name.endswith("_"):
+		base_name = base_name[:-1]
+		return f"{base_name}{checkpoint_index}{extension}"
+	return f"{base_name}-{checkpoint_index}{extension}"
+
+
+def save_checkpoint(model: nn.Module, cfg: TrainConfig, vocab_size: int, save_path: str, best_val_loss: float, step: int) -> None:
+	os.makedirs(os.path.dirname(save_path) or ".", exist_ok=True)
+	ckpt = {
+		"model_state": {k: v.cpu() for k, v in model.state_dict().items()},
+		"config": asdict(cfg),
+		"vocab_size": vocab_size,
+		"best_val_loss": best_val_loss,
+		"step": step,
+	}
+	torch.save(ckpt, save_path)
+
+
 @torch.no_grad()
 def estimate_loss(model: nn.Module, data: torch.Tensor, cfg: TrainConfig):
 	model.eval()
 	losses = []
-	for _ in range(6):
+	for _ in range(2):
 		xb, yb = get_batch(data, cfg.block_size, cfg.batch_size, cfg.device)
 		_, loss = model(xb, yb)
 		losses.append(loss.item())
@@ -31,6 +53,13 @@ def train(cfg: TrainConfig):
 	torch.manual_seed(cfg.seed)
 	os.makedirs("output", exist_ok=True)
 	log_path = os.path.join("output", f"train_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt")
+	if cfg.num_saved_models < 1:
+		raise ValueError("num_saved_models must be at least 1")
+	if cfg.num_saved_models > 1 and cfg.max_steps < cfg.num_saved_models:
+		raise ValueError("max_steps must be greater than or equal to num_saved_models when saving multiple checkpoints")
+	checkpoint_steps = set()
+	if cfg.num_saved_models > 1:
+		checkpoint_steps = {math.ceil(cfg.max_steps * index / cfg.num_saved_models) for index in range(1, cfg.num_saved_models + 1)}
 
 	def log(message: str) -> None:
 		print(message)
@@ -59,10 +88,11 @@ def train(cfg: TrainConfig):
 		log(f"initialized model weights from {cfg.init_from}")
 	model.to(cfg.device)
 	optimizer = torch.optim.AdamW(model.parameters(), lr=cfg.lr)
-	scheduler = create_cosine_with_warmup_scheduler(optimizer, cfg.warmup_steps, int(cfg.max_steps/cfg.acc_steps))
+	scheduler = create_cosine_with_warmup_scheduler(optimizer, cfg.warmup_steps, int(cfg.max_steps/cfg.acc_steps), 0.333334)
 	optimizer.zero_grad(set_to_none=True)
 	best_val_loss = float("inf")
 	best_state = None
+	checkpoint_index = 0
 
 	for step in range(1, cfg.max_steps + 1):
 		xb, yb = get_batch(train_data, cfg.block_size, cfg.batch_size, cfg.device)
@@ -76,6 +106,12 @@ def train(cfg: TrainConfig):
 			scheduler.step()
 			optimizer.zero_grad(set_to_none=True)
 
+		if cfg.num_saved_models > 1 and step in checkpoint_steps:
+			checkpoint_index += 1
+			checkpoint_path = build_checkpoint_path(cfg.save_path, checkpoint_index, cfg.num_saved_models)
+			save_checkpoint(model, cfg, vocab_size, checkpoint_path, best_val_loss, step)
+			log(f"saved checkpoint {checkpoint_index}/{cfg.num_saved_models} to {checkpoint_path}")
+
 		if step % cfg.eval_every == 0 or step == 1:
 			val_loss = estimate_loss(model, val_data, cfg)
 			ppl = math.exp(val_loss)
@@ -85,15 +121,16 @@ def train(cfg: TrainConfig):
 				best_val_loss = val_loss
 				best_state = {k: v.cpu() for k, v in model.state_dict().items()}
 
-	os.makedirs(os.path.dirname(cfg.save_path), exist_ok=True)
-	if best_state is not None:
-		model.load_state_dict(best_state)
-	ckpt = {
-		"model_state": model.state_dict(),
-		"config": asdict(cfg),
-		"vocab_size": vocab_size,
-		"best_val_loss": best_val_loss,
-	}
-	torch.save(ckpt, cfg.save_path)
-	log(f"best val loss: {best_val_loss:.4f}")
-	log(f"saved to {cfg.save_path}")
+	if cfg.num_saved_models <= 1:
+		os.makedirs(os.path.dirname(cfg.save_path) or ".", exist_ok=True)
+		if best_state is not None:
+			model.load_state_dict(best_state)
+		ckpt = {
+			"model_state": model.state_dict(),
+			"config": asdict(cfg),
+			"vocab_size": vocab_size,
+			"best_val_loss": best_val_loss,
+		}
+		torch.save(ckpt, cfg.save_path)
+		log(f"best val loss: {best_val_loss:.4f}")
+		log(f"saved to {cfg.save_path}")

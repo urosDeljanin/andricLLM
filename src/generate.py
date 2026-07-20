@@ -22,7 +22,6 @@ def generate_text(
 	try:
 		ckpt = torch.load(model_path, map_location="cpu", weights_only=True)
 	except TypeError:
-		# Fallback for older PyTorch versions that do not support weights_only.
 		ckpt = torch.load(model_path, map_location="cpu")
 	cfg = TrainConfig(**ckpt["config"])
 	gen_device = _resolve_device(device or cfg.device)

@@ -16,22 +16,23 @@ def parse_args():
 	general_group.add_argument("--seed", type=int, default=42, help="Random seed for reproducibility.")
 	
 	train_group = parser.add_argument_group("Training Arguments")
-	train_group.add_argument("--model-path", default="tokenizer/andric_sp.model", help="Path to the SentencePiece model.")
-	train_group.add_argument("--input-path", default="input/sveKnjige.txt", help="Path to the training text data.")
-	train_group.add_argument("--save-path", default="models/andric_model.pt", help="Path to save the trained model.")
+	train_group.add_argument("--model-path", default="tokenizer/sr_tokenizer.model", help="Path to the SentencePiece model.")
+	train_group.add_argument("--input-path", default="input/datasetbpe.txt", help="Path to the training text data.")
+	train_group.add_argument("--save-path", default="models/sr_model.pt", help="Path to save the trained model.")
+	train_group.add_argument("--num-saved-models", type=int, default=1, help="Number of checkpoints to save evenly across training.")
 	train_group.add_argument("--init-from", default=None, help="Path to a pre-trained model to initialize from.")
-	train_group.add_argument("--block-size", type=int, default=512, help="Context block size.")
-	train_group.add_argument("--batch-size", type=int, default=20, help="Batch size per training step.")
-	train_group.add_argument("--embed-dim", type=int, default=384, help="Embedding dimension size.")
-	train_group.add_argument("--num-layers", type=int, default=6, help="Number of transformer layers.")
-	train_group.add_argument("--num-heads", type=int, default=6, help="Number of attention heads.")
+	train_group.add_argument("--block-size", type=int, default=1024, help="Context block size.")
+	train_group.add_argument("--batch-size", type=int, default=16, help="Batch size per training step.")
+	train_group.add_argument("--embed-dim", type=int, default=768, help="Embedding dimension size.")
+	train_group.add_argument("--num-layers", type=int, default=8, help="Number of transformer layers.")
+	train_group.add_argument("--num-heads", type=int, default=12, help="Number of attention heads.")
 	train_group.add_argument("--dropout", type=float, default=0.1, help="Dropout probability.")
 	train_group.add_argument("--lr", type=float, default=3e-4, help="Learning rate.")
 	train_group.add_argument("--max-steps", type=int, default=3000, help="Maximum number of training steps.")
 	train_group.add_argument("--warmup-steps", type=int, default=300, help="Number of warmup steps for learning rate scheduler.")
 	train_group.add_argument("--eval-every", type=int, default=50, help="Interval for evaluation and saving checkpoints.")
-	train_group.add_argument("--acc-steps", type=int, default=25, help="Gradient accumulation steps.")
-	train_group.add_argument("--val-split", type=float, default=0.1, help="Validation split ratio.")
+	train_group.add_argument("--acc-steps", type=int, default=1, help="Gradient accumulation steps.")
+	train_group.add_argument("--val-split", type=float, default=0.05, help="Validation split ratio.")
 	train_group.add_argument("--save-last-model", action="store_true", help="Save the model at the very end of training.")
 	
 	gen_group = parser.add_argument_group("Generation Arguments")
@@ -50,6 +51,7 @@ def main():
 			model_path=args.model_path,
 			input_path=args.input_path,
 			save_path=args.save_path,
+			num_saved_models=args.num_saved_models,
 			init_from=args.init_from,
 			block_size=args.block_size,
 			batch_size=args.batch_size,

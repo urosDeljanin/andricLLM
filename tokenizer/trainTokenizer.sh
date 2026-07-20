@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-CORPUS="${CORPUS:-input/dataset.txt}"
+CORPUS="${CORPUS:-input/sveAndriceveKnjige.txt}"
 OUT_DIR="${OUT_DIR:-tokenizer}"
-MODEL_PREFIX="${MODEL_PREFIX:-andric_sp}"
+MODEL_PREFIX="${MODEL_PREFIX:-andric_tokenizer}"
 
 VOCAB_SIZE="${VOCAB_SIZE:-8000}"
 MODEL_TYPE="${MODEL_TYPE:-unigram}"
@@ -37,5 +37,5 @@ spm_train \
   --shuffle_input_sentence="$SHUFFLE_INPUT_SENTENCE" \
   --normalization_rule_name=nmt_nfkc \
   --split_digits=true \
-  --byte_fallback=false \
+  --byte_fallback=true \
   "${EXTRA_ARGS[@]}"
